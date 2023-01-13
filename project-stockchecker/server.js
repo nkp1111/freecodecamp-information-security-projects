@@ -8,7 +8,7 @@ const apiRoutes = require('./routes/api.js');
 const fccTestingRoutes = require('./routes/fcctesting.js');
 const runner = require('./test-runner');
 
-const helmet = require("helmet")
+
 
 const app = express();
 
@@ -19,8 +19,9 @@ app.use(cors({ origin: '*' })); //For FCC testing purposes only
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// helmet 
+const helmet = require("helmet")
 app.use(helmet())
-
 app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
@@ -28,6 +29,16 @@ app.use(helmet.contentSecurityPolicy({
     styleSrc: ["'self'"]
   }
 }))
+
+// to connect mongoose
+const mongoose = require('mongoose')
+mongoose.connect(process.env['DB'])
+  .then(() => {
+    console.log('Mongoose connected')
+  })
+  .catch((err) => {
+    console.log('error', err)
+  })
 
 //Index page (static HTML)
 app.route('/')
