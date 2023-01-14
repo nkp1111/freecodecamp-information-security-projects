@@ -16,7 +16,11 @@ module.exports = function (app) {
 
       if (like) {
         const currentUser = req.headers['x-forwarded-for'] || req.socket.remoteAddress
-        checkUser(currentUser)
+
+        if (!checkUser(currentUser)) {
+          console.log("liking it ")
+          likeSymbols(symbols)
+        }
       }
 
       // for more than one symbol 
@@ -39,13 +43,15 @@ module.exports = function (app) {
 
       if (!data2) {
         // response for one symbol 
-        res.send({
-          "stockData": {
-            "stock": symbols,
-            "price": data["previousClose"],
-            "likes": 1
+        res.send(
+          {
+            "stockData": {
+              "stock": symbols,
+              "price": data["previousClose"],
+              "likes": 1
+            }
           }
-        })
+        )
       } else {
         // response for two symbol
         res.send({
@@ -58,10 +64,11 @@ module.exports = function (app) {
 };
 
 function checkUser(user) {
-  // check if current user is old user or new one
+  // check if current user have already liked or not 
   User.find().then(async data => {
     let userip = user.split(":").slice(-1,)[0].split(".").join("")
-    let hashedip = await bcrypt.hash(user, 12)
+    // console.log(await bcrypt.genSalt(10))
+    let hashedip = await bcrypt.hash(user, "$2b$10$mTdlWLqvpkkF/eFPV8rKr.")
     console.log(hashedip, data)
 
     if (data.indexOf(hashedip) !== -1) {
@@ -73,6 +80,54 @@ function checkUser(user) {
       await newone.save()
       return false
     }
+  })
+}
+
+function likeSymbols(symbols) {
+  // like the symbol
+  Like.find().then(data => {
+    // get all likes
+    let likes = data
+    if (Array.isArray(symbols)) {
+      // if symbols is an array check each symbol
+      for (let s of symbols) {
+        let symbolUpdated = false
+        for (let l of likes) {
+          if (l.title == s) {
+            symbolUpdated = true
+            let currentLikes = l.like + 1
+            l.like = currentLikes
+            l.save()
+          }
+        }
+        // if symbol is not present in database add it
+        if (!symbolUpdated) {
+          let newone = new Like(
+            { title: s, like: 1 }
+          )
+          newone.save()
+        }
+      }
+    }
+    else {
+      // if symbols is not an array check the symbol
+      let symbolUpdated = false
+      Like.find().then(data => {
+        for (let l of data) {
+          if (l.title == symbols) {
+            symbolUpdated = true
+            let currentLikes = l.like + 1
+            l.like = currentLikes
+            l.save()
+          }
+        }
+      })
+      if (!symbolUpdated) {
+        const newone = Like({ title: symbols, like: 1 })
+        newone.save()
+      }
+    }
+
   })
 
 }
