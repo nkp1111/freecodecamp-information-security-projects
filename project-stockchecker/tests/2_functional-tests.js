@@ -6,11 +6,17 @@ const server = require('../server');
 chai.use(chaiHttp);
 
 suite('Functional Tests', function () {
+
+  let previousLike
   test("Viewing one stock GET /api/stock-prices/", function (done) {
     chai.request(server)
       .get("/api/stock-prices?stock=GOOG")
       .end(function (err, res) {
         assert.equal(res.status, 200)
+        assert.typeOf(res.body, "object")
+        assert.equal(res.body.stockData.stock, "GOOG")
+        assert.isDefined(res.body.stockData.price)
+        assert.isNotNaN(res.body.stockData.likes)
         done()
       })
   })
@@ -20,6 +26,9 @@ suite('Functional Tests', function () {
       .get("/api/stock-prices?stock=GOOG&like=true")
       .end(function (err, res) {
         assert.equal(res.status, 200)
+        assert.typeOf(res.body, "object")
+        assert.equal(res.body.stockData.stock, "GOOG")
+        previousLike = res.body.likes
         done()
       })
   })
@@ -29,6 +38,7 @@ suite('Functional Tests', function () {
       .get("/api/stock-prices?stock=GOOG&like=true")
       .end(function (err, res) {
         assert.equal(res.status, 200)
+        assert.equal(res.body.likes, previousLike)
         done()
       })
   })
@@ -38,6 +48,10 @@ suite('Functional Tests', function () {
       .get("/api/stock-prices?stock=GOOG&stock=MSFT")
       .end(function (err, res) {
         assert.equal(res.status, 200)
+        assert.typeOf(res.body, "object")
+        assert.typeOf(res.body.stockData, "array")
+        assert.equal(res.body.stockData.length, 2)
+        assert.isDefined(res.body.stockData[0].rel_likes)
         done()
       })
   })
@@ -47,6 +61,10 @@ suite('Functional Tests', function () {
       .get("/api/stock-prices?stock=GOOG&stock=MSFT&like=true")
       .end(function (err, res) {
         assert.equal(res.status, 200)
+        assert.typeOf(res.body, "object")
+        assert.typeOf(res.body.stockData, "array")
+        assert.equal(res.body.stockData.length, 2)
+        assert.isDefined(res.body.stockData[0].rel_likes)
         done()
       })
   })
