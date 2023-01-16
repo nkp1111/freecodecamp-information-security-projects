@@ -4,22 +4,26 @@ const mongoose = require("mongoose")
 // Schema: threadSchema, replySchema
 
 const threadSchema = new mongoose.Schema({
+  board: {
+    type: String,
+    required: true
+  },
   text: {
     type: String,
     required: true,
   },
   created_on: {
-    type: Datetime,
+    type: Date,
     required: true,
     default: new Date(),
   },
   bumped_on: {
-    type: Datetime,
+    type: Date,
     required: true,
     default: new Date(),
   },
   reported: {
-    type: Bool,
+    type: Boolean,
     default: false,
   },
   delete_password: {
@@ -32,16 +36,20 @@ const threadSchema = new mongoose.Schema({
 })
 
 const replySchema = new mongoose.Schema({
+  board: {
+    type: String,
+    required: true,
+  },
   text: {
     type: String,
   },
   created_on: {
-    type: Datetime,
+    type: Date,
     required: true,
     default: new Date(),
   },
   reported: {
-    type: Bool,
+    type: Boolean,
     default: false,
   },
   delete_password: {
@@ -57,4 +65,4 @@ const replySchema = new mongoose.Schema({
 const Thread = mongoose.model("Thread", threadSchema)
 const Reply = mongoose.model("Reply", replySchema)
 
-export { Thread, Reply }
+module.exports = { Thread, Reply }
