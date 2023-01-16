@@ -51,6 +51,21 @@ module.exports = function (app) {
       }
     })
 
+    .put(async function (req, res) {
+      const { board } = req.params
+      const { thread_id } = req.body
+      const threadToUpdate = await Thread.findOne({ _id: thread_id })
+      if (!threadToUpdate) {
+        res.send("incorrect thread id")
+      } else {
+        threadToUpdate.reported = true
+        threadToUpdate.bumped_on = new Date()
+        await threadToUpdate.save()
+        res.send("reported")
+      }
+    })
+
+
 
   app.route('/api/replies/:board')
     .post(async function (req, res) {
@@ -100,9 +115,23 @@ module.exports = function (app) {
         await threadFromDelete.save()
         res.send("[deleted]")
       }
-
     })
 
+    .put(async function (req, res) {
+      const { board } = req.params
+      const { thread_id, reply_id } = req.body
+      const replyToUpdate = await replies.find({ _id: reply_id })
+      const threadBumped = await Thread.find({ _id: thread_id })
+      if (!replyToUpdate) {
+        res.send("incorrect reply id")
+      } else {
+        replyToUpdate.reported = true
+        threadBumped.bumped_on = new Date()
+        await threadBumped.save()
+        await replyToUpdate.save()
+        res.send("reported")
+      }
+    })
 
 
 };
