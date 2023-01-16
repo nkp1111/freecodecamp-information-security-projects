@@ -1,29 +1,46 @@
 'use strict';
 let axios = require("axios")
 const bcrypt = require("bcrypt")
-let symbols
+
 let baseUrl = "https://stock-price-checker-proxy.freecodecamp.rocks/v1/stock/"
-let data
-let data2
-let { Like, User } = require("./likeDb")
+let { Like, User, checkUserPresence } = require("./likeDb")
 
 module.exports = function (app) {
 
+  // ----------------------------------------------------- //
+  const checkUser = async (user) => {
+    // check current user presence in database
+    let userip = user.split(":").slice(-1,)[0].split(".").join("")
+    // console.log(await bcrypt.genSalt(10))
+    const haship = await bcrypt.hash(userip, "$2b$10$mTdlWLqvpkkF/eFPV8rKr.")
+    const isUser = checkUserPresence(haship)
+    if (isUser) {
+      // user already liked a stock
+      return false
+    } else {
+      // user has not liked a stock 
+      return true
+    }
+  }
+
+  // ----------------------------------------------------- //
+  const likeSymbols = async (symbols) => {
+    // like the symbol
+
+  }
+
+  // ----------------------------------------------------- //
+
   app.route('/api/stock-prices')
     .get(async function (req, res) {
-      symbols = req.query.stock
+      const symbols = req.query.stock
       const like = req.query.like
+      let data
+      let data2
+      let currentUser = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+      let stockLikeChance = await checkUser(currentUser)
+      console.log(stockLikeChance)
 
-      if (like) {
-        const currentUser = req.headers['x-forwarded-for'] || req.socket.remoteAddress
-
-        if (!checkUser(currentUser)) {
-          console.log("liking it ")
-          likeSymbols(symbols)
-        }
-      }
-
-      // for more than one symbol 
       if (Array.isArray(symbols)) {
         for (let s of symbols) {
           await axios.get(baseUrl + s.toUpperCase() + "/quote")
@@ -35,99 +52,24 @@ module.exports = function (app) {
               }
             })
         }
-        // for one symbol 
-      } else {
-        await axios.get(baseUrl + symbols.toUpperCase() + "/quote")
-          .then(res => data = res["data"])
-      }
-
-      if (!data2) {
-        // response for one symbol 
-        res.send(
-          {
-            "stockData": {
-              "stock": symbols,
-              "price": data["previousClose"],
-              "likes": 1
-            }
-          }
-        )
-      } else {
         // response for two symbol
         res.send({
           "stockData": [
             { "stock": symbols[0], "price": parseFloat(data["previousClose"]), "rel_likes": 1 },
-            { "stock": symbols[1], "price": parseFloat(data["previousClose"]), "rel_likes": 1 }]
+            { "stock": symbols[1], "price": parseFloat(data2["previousClose"]), "rel_likes": -1 }]
+        })
+
+      } else {
+        await axios.get(baseUrl + symbols.toUpperCase() + "/quote")
+          .then(res => data = res["data"])
+        // response for one symbol 
+        res.send({
+          "stockData": {
+            "stock": symbols,
+            "price": data["previousClose"],
+            "likes": 1
+          }
         })
       }
-    });
-};
-
-function checkUser(user) {
-  // check if current user have already liked or not 
-  User.find().then(async data => {
-    let userip = user.split(":").slice(-1,)[0].split(".").join("")
-    // console.log(await bcrypt.genSalt(10))
-    let hashedip = await bcrypt.hash(user, "$2b$10$mTdlWLqvpkkF/eFPV8rKr.")
-    console.log(hashedip, data)
-
-    if (data.indexOf(hashedip) !== -1) {
-      return true
-    } else {
-      let newone = new User({
-        user: hashedip
-      })
-      await newone.save()
-      return false
-    }
-  })
-}
-
-function likeSymbols(symbols) {
-  // like the symbol
-  Like.find().then(data => {
-    // get all likes
-    let likes = data
-    if (Array.isArray(symbols)) {
-      // if symbols is an array check each symbol
-      for (let s of symbols) {
-        let symbolUpdated = false
-        for (let l of likes) {
-          if (l.title == s) {
-            symbolUpdated = true
-            let currentLikes = l.like + 1
-            l.like = currentLikes
-            l.save()
-          }
-        }
-        // if symbol is not present in database add it
-        if (!symbolUpdated) {
-          let newone = new Like(
-            { title: s, like: 1 }
-          )
-          newone.save()
-        }
-      }
-    }
-    else {
-      // if symbols is not an array check the symbol
-      let symbolUpdated = false
-      Like.find().then(data => {
-        for (let l of data) {
-          if (l.title == symbols) {
-            symbolUpdated = true
-            let currentLikes = l.like + 1
-            l.like = currentLikes
-            l.save()
-          }
-        }
-      })
-      if (!symbolUpdated) {
-        const newone = Like({ title: symbols, like: 1 })
-        newone.save()
-      }
-    }
-
-  })
-
+    })
 }
