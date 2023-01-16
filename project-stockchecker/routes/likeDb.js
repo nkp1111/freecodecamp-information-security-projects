@@ -21,7 +21,7 @@ const User = mongoose.model("User", UserSchema)
 
 const checkUserPresence = async (user) => {
   const userExists = await User.findOne({ "user": user })
-  console.log(userExists)
+
   if (userExists) {
     console.log("user is here")
     return true
@@ -34,15 +34,14 @@ const checkUserPresence = async (user) => {
 
 const getSymbolLike = async (symbol, like) => {
   const symbolExists = await Like.findOne({ "title": symbol })
+
   if (symbolExists) {
-    console.log("symbol is here")
     if (like) {
       symbolExists.likes += 1
       await symbolExists.save()
     }
     return symbolExists.likes
   } else {
-    console.log("symbol is not here")
     await Like.create({
       title: symbol,
       likes: like ? 1 : 0

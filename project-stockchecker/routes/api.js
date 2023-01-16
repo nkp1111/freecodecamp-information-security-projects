@@ -3,7 +3,7 @@ let axios = require("axios")
 const bcrypt = require("bcrypt")
 
 let baseUrl = "https://stock-price-checker-proxy.freecodecamp.rocks/v1/stock/"
-let { Like, User, checkUserPresence, getSymbolLike } = require("./likeDb")
+let { checkUserPresence, getSymbolLike } = require("./likeDb")
 
 module.exports = function (app) {
 
@@ -29,28 +29,31 @@ module.exports = function (app) {
     .get(async function (req, res) {
       const symbols = req.query.stock
       const like = req.query.like
+
       let stockLikeChance
       let data, like1
       let data2, like2
+
       let currentUser = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+
       if (like) {
         stockLikeChance = await checkUser(currentUser)
       }
 
-      // for more than one symbol 
+      // for two symbols
       if (Array.isArray(symbols)) {
         for (let s of symbols) {
-          await axios.get(baseUrl + s.toUpperCase() + "/quote")
+          let curSymbol = s.toUpperCase()
+          await axios.get(baseUrl + curSymbol + "/quote")
             .then(async res => {
               if (!data) {
                 data = res["data"]
-                like1 = await getSymbolLike(s.toUpperCase(), stockLikeChance)
+                like1 = await getSymbolLike(curSymbol, stockLikeChance)
               } else {
                 data2 = res["data"]
-                like2 = await getSymbolLike(s.toUpperCase(), stockLikeChance)
+                like2 = await getSymbolLike(curSymbol, stockLikeChance)
               }
             })
-
         }
         // response for two symbol
         res.send({
@@ -59,13 +62,12 @@ module.exports = function (app) {
             { "stock": symbols[1], "price": parseFloat(data2["previousClose"]), "rel_likes": like2 }]
         })
 
-        // response for one symbol 
       } else {
+        // for one symbol 
         await axios.get(baseUrl + symbols.toUpperCase() + "/quote")
           .then(res => data = res["data"])
 
         like1 = await getSymbolLike(symbols.toUpperCase(), stockLikeChance)
-
 
         // response for one symbol 
         res.send({
