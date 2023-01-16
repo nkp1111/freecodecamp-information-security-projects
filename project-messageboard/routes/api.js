@@ -14,7 +14,7 @@ module.exports = function (app) {
         text,
         delete_password,
       })
-      res.redirect(`/b/${board}/`)
+      res.redirect(`/api/threads/${board}`)
     })
 
     .get(async function (req, res) {
@@ -24,11 +24,11 @@ module.exports = function (app) {
       boardToShow = boardToShow.map(thread => {
         let threadToView = {
           id: thread._id,
-          text: text,
-          created_on: created_on,
-          bumped_on: bumped_on,
+          text: thread.text,
+          created_on: thread.created_on,
+          bumped_on: thread.bumped_on,
           replies: thread.replies.slice(0, 3),
-          board: board,
+          board: thread.board,
         }
         return threadToView
       }).slice(0, 10)
@@ -80,10 +80,11 @@ module.exports = function (app) {
       })
 
       const threadToUpdate = await Thread.find({ _id: thread_id })
+      console.log("reply post", threadToUpdate)
       threadToUpdate.replies.push(reply._id)
       threadToUpdate.bumped_on = new Date()
       await threadToUpdate.save()
-      res.redirect("")
+      res.redirect(`/api/replies/${board}?thread_id=${thread_id}`)
     })
 
     .get(async function (req, res) {
