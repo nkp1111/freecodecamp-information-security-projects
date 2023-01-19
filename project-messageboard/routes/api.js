@@ -30,11 +30,18 @@ module.exports = function (app) {
           text: thread.text,
           created_on: thread.created_on,
           bumped_on: thread.bumped_on,
-          replies: thread.replies.sort((a, b) => a.created_on - b.created_on).slice(0, 3),
+          replies: thread.replies.sort((a, b) => a.created_on - b.created_on).slice(0, 3).map(reply => {
+            let rep = {
+              id: reply._id,
+              text: reply.text,
+              created_on: reply.created_on,
+            }
+            return rep
+          }),
         }
         return threadToView
       }).slice(0, 10)
-      // console.log("get thread", threads)
+      console.log("get thread", threads[0])
       res.send(threads)
     })
     .delete(async (req, res) => {
@@ -63,14 +70,53 @@ module.exports = function (app) {
       }
     })
 
+  // app.route('/api/replies/:board')
+  //   .post(async (req, res) => {
+  //     // POST ROUTE
+  //     const {board} = req.params
+  //     const { text, delete_password, thread_id } = req.body
+  //     const reply = await Reply.create({
+  //       board,
+  //       text,
+  //       delete_password,
+  //       thread_id,
+  //     })
 
-  app.route('/api/replies/:board')
+  //     let threadToUpdate = await Thread.findById(thread_id)
+  //     threadToUpdate.replies.push(reply)
+  //     threadToUpdate.bumped_on = new Date()
+  //     threadToUpdate.save()
 
+  //     // console.log("post reply", reply, threadToUpdate)
+  //     res.send(reply)
+  //   })
+  // .get(async (req, res) => {
+  //   const {thread_id} = req.query
+  //   let thread = await Thread.findById(thread_id).populate("replies")
+
+  //   threadToView = {
+  //     _id: thread._id,
+  //     text: thread.text,
+  //     created_on: thread.created_on,
+  //     bumped_on: thread.bumped_on,
+  //     replies: thread.replies.map(reply => {
+  //                     return {
+  //                       _id: reply._id,
+  //                       text: reply.text,
+  //                       create_on: reply.created_on,
+  //                     }
+  //               }),
+
+  //   }
+
+  //   console.log("get reply", threadToView)
+  //   res.send(threadToView)
+  // })
+  // .delete(async (req, res) => {
+  //   res.send("hello")
+  // })
+  // .put(async (req, res) => {
+  //   res.send("hello")
+  // })
 
 };
-
-
-
-
-
-
