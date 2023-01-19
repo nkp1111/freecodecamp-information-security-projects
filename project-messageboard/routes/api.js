@@ -41,7 +41,7 @@ module.exports = function (app) {
         }
         return threadToView
       }).slice(0, 10)
-      console.log("get thread", threads[0])
+      // console.log("get thread", threads[0])
       res.send(threads)
     })
     .delete(async (req, res) => {
@@ -70,48 +70,48 @@ module.exports = function (app) {
       }
     })
 
-  // app.route('/api/replies/:board')
-  //   .post(async (req, res) => {
-  //     // POST ROUTE
-  //     const {board} = req.params
-  //     const { text, delete_password, thread_id } = req.body
-  //     const reply = await Reply.create({
-  //       board,
-  //       text,
-  //       delete_password,
-  //       thread_id,
-  //     })
+  app.route('/api/replies/:board')
+    .post(async (req, res) => {
+      // POST ROUTE
+      const { board } = req.params
+      const { text, delete_password, thread_id } = req.body
+      const reply = new Reply({
+        board,
+        text,
+        delete_password,
+        thread_id,
+      })
 
-  //     let threadToUpdate = await Thread.findById(thread_id)
-  //     threadToUpdate.replies.push(reply)
-  //     threadToUpdate.bumped_on = new Date()
-  //     threadToUpdate.save()
+      let threadToUpdate = await Thread.findById(thread_id)
+      threadToUpdate.replies.push(reply)
+      threadToUpdate.bumped_on = new Date()
+      await threadToUpdate.save()
 
-  //     // console.log("post reply", reply, threadToUpdate)
-  //     res.send(reply)
-  //   })
-  // .get(async (req, res) => {
-  //   const {thread_id} = req.query
-  //   let thread = await Thread.findById(thread_id).populate("replies")
+      console.log("post reply", reply, threadToUpdate)
+      res.send(reply)
+    })
+    .get(async (req, res) => {
+      const { thread_id } = req.query
+      let thread = await Thread.findById(thread_id).populate("replies")
 
-  //   threadToView = {
-  //     _id: thread._id,
-  //     text: thread.text,
-  //     created_on: thread.created_on,
-  //     bumped_on: thread.bumped_on,
-  //     replies: thread.replies.map(reply => {
-  //                     return {
-  //                       _id: reply._id,
-  //                       text: reply.text,
-  //                       create_on: reply.created_on,
-  //                     }
-  //               }),
+      let threadToView = {
+        _id: thread._id,
+        text: thread.text,
+        created_on: thread.created_on,
+        bumped_on: thread.bumped_on,
+        replies: thread.replies.map(reply => {
+          return {
+            _id: reply._id,
+            text: reply.text,
+            created_on: reply.created_on,
+          }
+        }),
 
-  //   }
+      }
 
-  //   console.log("get reply", threadToView)
-  //   res.send(threadToView)
-  // })
+      console.log("get reply", threadToView)
+      res.send(threadToView)
+    })
   // .delete(async (req, res) => {
   //   res.send("hello")
   // })
