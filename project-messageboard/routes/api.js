@@ -1,11 +1,12 @@
 'use strict';
 const { Thread, Reply } = require("../model/messageBoard")
 
+
 module.exports = function (app) {
 
   app.route('/api/threads/:board')
-
-    .post(async function (req, res) {
+    .post(async (req, res) => {
+      // POST ROUTE
       const { board } = req.params
       const { text, delete_password } = req.body
 
@@ -13,126 +14,63 @@ module.exports = function (app) {
         board,
         text,
         delete_password,
+        replies: [],
       })
-      res.redirect(`/api/threads/${board}`)
+      // console.log("post thread", thread)
+      res.send(thread)
     })
-
-    .get(async function (req, res) {
+    .get(async (req, res) => {
+      // GET ROUTE
       const { board } = req.params
-      let boardToShow = await Thread.find({ board }).sort("-bumped_on").populate("replies")
-      console.log("board get")
-      boardToShow = boardToShow.map(thread => {
+      let threads = await Thread.find({ board }).sort("-bumped_on").populate("replies")
+
+      threads = threads.map(thread => {
         let threadToView = {
-          id: thread._id,
+          _id: thread._id,
           text: thread.text,
           created_on: thread.created_on,
           bumped_on: thread.bumped_on,
-          replies: thread.replies.slice(0, 3),
-          board: thread.board,
+          replies: thread.replies.sort((a, b) => a.created_on - b.created_on).slice(0, 3),
         }
         return threadToView
       }).slice(0, 10)
-      res.send(boardToShow)
+      // console.log("get thread", threads)
+      res.send(threads)
     })
-
-    .delete(async function (req, res) {
-      const { board } = req.params
-      const { thread_id, delete_password } = req.body
-      console.log("thread delete", thread_id, delete_password)
-      const threadToDelete = await Thread.findOne({ _id: thread_id })
-      if (!threadToDelete) {
-        res.send("incorrect password")
-      } else if (threadToDelete && threadToDelete.delete_password !== delete_password) {
-        res.send("incorrect password")
-      }
-      else {
+    .delete(async (req, res) => {
+      // DELETE ROUTE
+      const { board, thread_id, delete_password } = req.body
+      let threadToDelete = await Thread.findById(thread_id)
+      // console.log("delete thread", threadToDelete, threadToDelete.delete_password, delete_password)
+      if (threadToDelete && threadToDelete.delete_password === delete_password) {
         await threadToDelete.remove()
         res.send("success")
+      } else {
+        res.send("incorrect password")
       }
     })
-
-    .put(async function (req, res) {
-      const { board } = req.params
-      const { thread_id } = req.body
-      const threadToUpdate = await Thread.findOne({ _id: thread_id })
-      if (!threadToUpdate) {
-        res.send("incorrect thread id")
-      } else {
+    .put(async (req, res) => {
+      // PUT ROUTE
+      const { board, thread_id } = req.body
+      const threadToUpdate = await Thread.findById(thread_id)
+      // console.log("put thread", threadToUpdate)
+      if (threadToUpdate) {
         threadToUpdate.reported = true
-        threadToUpdate.bumped_on = new Date()
         await threadToUpdate.save()
         res.send("reported")
+      } else {
+        res.send("incorrect thread id")
       }
     })
-
 
 
   app.route('/api/replies/:board')
-    .post(async function (req, res) {
-      const { board } = req.params
-      const { text, delete_password, thread_id } = req.body
-
-      const reply = await Reply.create({
-        board,
-        text,
-        delete_password,
-        thread_id
-      })
-
-      const threadToUpdate = await Thread.find({ _id: thread_id })
-      console.log("reply post", threadToUpdate)
-      threadToUpdate.replies.push(reply._id)
-      threadToUpdate.bumped_on = new Date()
-      await threadToUpdate.save()
-      res.redirect(`/api/replies/${board}?thread_id=${thread_id}`)
-    })
-
-    .get(async function (req, res) {
-      const { board } = req.params
-      const { thread_id } = req.query
-      console.log("reply get", thread_id, board)
-      const threadsToView = await Thread.find({ _id: thread_id })
-      res.send(threadsToView)
-    })
-
-    .delete(async function (req, res) {
-      const { board } = req.params
-      const { thread_id, reply_id, delete_password } = req.body
-      console.log("reply delete", thread_id, reply_id, delete_password)
-      const threadFromDelete = await Thread.findOne({ _id: thread_id })
-      if (!threadFromDelete) {
-        res.send("incorrect password")
-      }
-      const replyToDelete = threadFromDelete.replies.find(reply => reply.id === reply_id)
-      if (!replyToDelete) {
-        res.send("incorrect password")
-      } else if (replyToDelete && replyToDelete.delete_password !== delete_password) {
-        res.send("incorrect password")
-      } else {
-        threadFromDelete.replies.remove(replyToDelete)
-        threadFromDelete.bumped_on = new Date()
-
-        await Reply.deleteOne(replyToDelete)
-        await threadFromDelete.save()
-        res.send("[deleted]")
-      }
-    })
-
-    .put(async function (req, res) {
-      const { board } = req.params
-      const { thread_id, reply_id } = req.body
-      const replyToUpdate = await replies.find({ _id: reply_id })
-      const threadBumped = await Thread.find({ _id: thread_id })
-      if (!replyToUpdate) {
-        res.send("incorrect reply id")
-      } else {
-        replyToUpdate.reported = true
-        threadBumped.bumped_on = new Date()
-        await threadBumped.save()
-        await replyToUpdate.save()
-        res.send("reported")
-      }
-    })
 
 
 };
+
+
+
+
+
+
