@@ -17,7 +17,7 @@ module.exports = function (app) {
         replies: [],
       })
       // console.log("post thread", thread)
-      res.send(thread)
+      res.redirect(`/b/${board}/`)
     })
     .get(async (req, res) => {
       // GET ROUTE
@@ -75,18 +75,19 @@ module.exports = function (app) {
       // POST ROUTE
       const { board } = req.params
       const { text, delete_password, thread_id } = req.body
+      let replyCreationTime = new Date()
       const reply = new Reply({
         text,
         delete_password,
-        created_on: new Date(),
+        created_on: replyCreationTime,
       })
 
       let threadToUpdate = await Thread.findById(thread_id)
       threadToUpdate.replies.push(reply)
-      threadToUpdate.bumped_on = new Date()
+      threadToUpdate.bumped_on = replyCreationTime
       await threadToUpdate.save()
       console.log("post reply", threadToUpdate)
-      res.send(threadToUpdate)
+      res.redirect(`/b/${board}/${thread_id}`)
     })
     .get(async (req, res) => {
       // GET ROUTE
