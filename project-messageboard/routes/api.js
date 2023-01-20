@@ -32,7 +32,7 @@ module.exports = function (app) {
           bumped_on: thread.bumped_on,
           replies: thread.replies.sort((a, b) => a.created_on - b.created_on).slice(0, 3).map(reply => {
             let rep = {
-              id: reply._id,
+              _id: reply._id,
               text: reply.text,
               created_on: reply.created_on,
             }
@@ -91,6 +91,7 @@ module.exports = function (app) {
       res.send(reply)
     })
     .get(async (req, res) => {
+      // GET ROUTE
       const { thread_id } = req.query
       let thread = await Thread.findById(thread_id).populate("replies")
 
@@ -106,17 +107,43 @@ module.exports = function (app) {
             created_on: reply.created_on,
           }
         }),
-
       }
-
-      console.log("get reply", threadToView)
+      // console.log("get reply", threadToView)
       res.send(threadToView)
     })
-  // .delete(async (req, res) => {
-  //   res.send("hello")
-  // })
-  // .put(async (req, res) => {
-  //   res.send("hello")
-  // })
+    .delete(async (req, res) => {
+      // DELETE ROUTE
+      const { thread_id, reply_id, delete_password } = req.body
+
+      let threadTarget = await Thread.findById(thread_id).populate("replies")
+      let replyTarget = await Reply.findById(reply_id)
+
+      if (replyTarget.thread_id.toString() === thread_id && replyTarget.delete_password === delete_password) {
+        replyTarget.text = "[deleted]"
+        threadTarget.bumped_on = new Date()
+        await threadTarget.save()
+        console.log("after", threadTarget)
+        res.send("success")
+      } else {
+        res.send("incorrect password")
+      }
+
+      //63c90a9decb49968a4727535 thread_id to test
+      //63c90ab1ecb49968a4727537 reply_id to test
+    })
+    .put(async (req, res) => {
+      const { thread_id, reply_id, board } = req.body
+      const threadTarget = await Thread.findById(thread_id)
+      const replyTarget = await Reply.findById(reply_id)
+
+      if (replyTarget.thread_id.toString() === thread_id && replyTarget.reply_id.toString() === reply_id) {
+        replyTarget.reported = true
+        threadTarget.bumped_on = new Date()
+        await threadTarget.save()
+        res.send("reported")
+      } else {
+        res.send("incorrect")
+      }
+    })
 
 };
