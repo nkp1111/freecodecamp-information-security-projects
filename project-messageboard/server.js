@@ -18,15 +18,19 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
+
+// ***************************************************** //
 // helmet 
 const helmet = require("helmet")
-app.use(helmet())
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'"],
-    styleSrc: ["'self'"]
-  }
+
+app.use(
+  helmet.frameguard({
+    action: "sameorigin",
+  })
+);
+
+app.use(helmet.dnsPrefetchControl({
+  allow: false
 }))
 
 app.use(helmet.referrerPolicy({
@@ -34,6 +38,7 @@ app.use(helmet.referrerPolicy({
 }))
 
 
+// ***************************************************** //
 // to connect mongoose
 const mongoose = require('mongoose')
 mongoose.connect(process.env['DB'])
@@ -44,6 +49,8 @@ mongoose.connect(process.env['DB'])
     console.log('error', err)
   })
 
+
+// ***************************************************** //
 
 //Sample front-end
 app.route('/b/:board/')
@@ -78,7 +85,7 @@ app.use(function (req, res, next) {
 const listener = app.listen(process.env.PORT || 3000, function () {
   console.log('Your app is listening on port ' + listener.address().port);
   if (process.env.NODE_ENV === 'test') {
-    console.log('Running  Tes ts...');
+    console.log('Running Tests...');
     setTimeout(function () {
       try {
         runner.run();
