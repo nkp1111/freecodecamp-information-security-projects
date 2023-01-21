@@ -16,8 +16,7 @@ module.exports = function (app) {
         delete_password,
         replies: [],
       })
-      // console.log("post thread", thread)
-      res.redirect(`/b/${board}/`)
+      res.send(thread)
     })
     .get(async (req, res) => {
       // GET ROUTE
@@ -41,14 +40,12 @@ module.exports = function (app) {
         }
         return threadToView
       }).slice(0, 10)
-      // console.log("get thread", threads[0])
       res.send(threads)
     })
     .delete(async (req, res) => {
       // DELETE ROUTE
       const { board, thread_id, delete_password } = req.body
       let threadToDelete = await Thread.findById(thread_id)
-      // console.log("delete thread", threadToDelete, threadToDelete.delete_password, delete_password)
       if (threadToDelete && threadToDelete.delete_password === delete_password) {
         await threadToDelete.remove()
         res.send("success")
@@ -60,7 +57,6 @@ module.exports = function (app) {
       // PUT ROUTE
       const { board, thread_id } = req.body
       let threadToUpdate = await Thread.findById(thread_id)
-      // console.log("put thread", threadToUpdate)
       if (threadToUpdate) {
         threadToUpdate.reported = true
         await threadToUpdate.save()
@@ -86,8 +82,7 @@ module.exports = function (app) {
       threadToUpdate.replies.push(reply)
       threadToUpdate.bumped_on = replyCreationTime
       await threadToUpdate.save()
-      console.log("post reply", threadToUpdate)
-      res.redirect(`/b/${board}/${thread_id}`)
+      res.send(threadToUpdate)
     })
     .get(async (req, res) => {
       // GET ROUTE
@@ -114,19 +109,19 @@ module.exports = function (app) {
       const { thread_id, reply_id, delete_password } = req.body
 
       let threadTarget = await Thread.findById(thread_id)
-      let replyTarget = threadTarget.replies.find(reply => reply._id.toString() === reply_id)
-
-      if (replyTarget && replyTarget.delete_password === delete_password) {
-        replyTarget.text = "[deleted]"
-        threadTarget.bumped_on = new Date()
-        await threadTarget.save()
-        // console.log("after", threadTarget)
-        res.send("success")
-      } else {
-        res.send("incorrect password")
+      for (let reply of threadTarget.replies) {
+        if (reply._id.toString() === reply_id && reply.delete_password === delete_password) {
+          reply.text = "[deleted]"
+          threadTarget.bumped_on = new Date()
+          await threadTarget.save()
+          res.send("success")
+          return
+        }
       }
 
+      res.send("incorrect password")
     })
+
     .put(async (req, res) => {
       const { thread_id, reply_id, board } = req.body
       const threadTarget = await Thread.findById(thread_id)
