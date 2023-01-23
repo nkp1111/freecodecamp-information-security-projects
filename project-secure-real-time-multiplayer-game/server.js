@@ -81,16 +81,20 @@ let bait
 
 io.on("connection", (socket) => {
 
+  // on player connect 
   socket.on("start", (player) => {
     console.log("player has joined", player)
     players.push(player)
+
+    // send player info
+    socket.emit("player_updates", players)
 
     // create a bait
     bait = createBait(baitNum)
     socket.emit("bait", bait)
   })
 
-  // on player collision
+  //  on player collision
   socket.on("collision", (player) => {
     for (let p of players) {
       if (p.id === player.id) {
@@ -103,18 +107,20 @@ io.on("connection", (socket) => {
   })
 })
 
-// function to create new collectible/bait 
+// create a new collectible 
 function createBait(id) {
   let random_x, random_y
   random_x = Math.floor(Math.random() * (CANVAS_WIDTH - 20)) + 20
   random_y = Math.floor(Math.random() * (CANVAS_HEIGHT - 20)) + 20
   random_value = Math.floor(Math.random() * 5) + 1
   baitNum += 1
-  return new Collectible({ x: random_x, y: random_y, value: random_value, id: id })
+  return new Collectible({
+    x: random_x,
+    y: random_y,
+    value: random_value,
+    id: id
+  })
 }
-
-
-
 
 
 module.exports = app; // For testing

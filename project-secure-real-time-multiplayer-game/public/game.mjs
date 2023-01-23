@@ -11,9 +11,10 @@ canvas.width = CANVAS_WIDTH
 canvas.height = CANVAS_HEIGHT
 
 const context = canvas.getContext('2d');
-context.fillStyle = getRandomColor()
+let initialColor = getRandomColor()
+context.fillStyle = initialColor
 
-let players = []
+let allPlayers = []
 let cPlayer
 let cBait
 
@@ -30,25 +31,36 @@ socket.on('connect', function () {
 
   socket.emit("start", cPlayer)
 
+  socket.on("player_updates", (players) => {
+    allPlayers = players
+    drawPlayers(allPlayers)
+  })
+
   socket.on("bait", (bait) => {
     cBait = bait
     drawBait(bait.x, bait.y, bait.value)
   })
 
-  if (cPlayer) {
-    context.fillRect(...getCoord(cPlayer))
-  }
-
   window.addEventListener("keydown", (e) => {
-    let direction = e.key === "d" ? "right" :
-      e.key === "a" ? "left" :
-        e.key === "w" ? "up" :
-          e.key === "s" ? "down" : null
+    let cur_key = e.key.toLowerCase()
+    let direction = cur_key === "d" ? "right" :
+      cur_key === "a" ? "left" :
+        cur_key === "w" ? "up" :
+          cur_key === "s" ? "down" : null
+
     if (direction) {
       context.clearRect(...getCoord(cPlayer))
       cPlayer.movePlayer(direction, 10)
       checkBoundary(cPlayer)
       context.fillRect(...getCoord(cPlayer))
+      allPlayers = allPlayers.map(p => {
+        if (p.id === cPlayer.id) {
+          return cPlayer
+        } else {
+          return p
+        }
+      })
+      socket.emit("player_updates", allPlayers)
     }
 
     if (cPlayer.collision(cBait)) {
@@ -56,6 +68,8 @@ socket.on('connect', function () {
       cBait = { value: 0 }
       context.fillRect(...getCoord(cPlayer))
       socket.emit("collision", cPlayer)
+      let rank = cPlayer.calculateRank(allPlayers)
+      document.getElementById("rank").innerText = rank
     }
   })
 
@@ -107,5 +121,12 @@ function drawBait(x, y, value) {
 function getBaitCoord(bait) {
   let radFactor = bait.value * 2 + 10
   return [bait.x - radFactor, bait.y - radFactor, bait.x + radFactor, bait.y + radFactor]
+}
+
+// draw all players
+function drawPlayers(players) {
+  for (let p of players) {
+    context.fillRect(...getCoord(p))
+  }
 }
 
