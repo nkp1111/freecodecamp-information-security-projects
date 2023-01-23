@@ -26,13 +26,12 @@ app.use(helmet.xssFilter())
 app.use(helmet.noSniff())
 app.use(helmet.noCache())
 
-// add custom header
+// custom header
 function customHeader(req, res, next) {
   app.disable("x-powered-by")
   res.setHeader("X-Powered-By", "PHP 7.4.3")
   next()
 }
-
 app.use(customHeader)
 
 // Index page (static HTML)
@@ -68,5 +67,14 @@ const server = app.listen(portNum, () => {
     }, 1500);
   }
 });
+
+
+// socket connection
+const io = socket.listen(server)
+
+io.on("connection", (socket) => {
+  console.log("user is connected", socket.id)
+})
+
 
 module.exports = app; // For testing
