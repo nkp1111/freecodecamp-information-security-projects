@@ -71,10 +71,37 @@ const server = app.listen(portNum, () => {
 
 // socket connection
 const io = socket.listen(server)
+const Collectible = require("./public/Collectible.mjs")
+const CANVAS_WIDTH = 800
+const CANVAS_HEIGHT = 500
+
+let players = []
+let baitNum = 0
 
 io.on("connection", (socket) => {
-  console.log("user is connected", socket.id)
+
+  socket.on("start", (player) => {
+    console.log("player has joined", player)
+    players.push(player)
+
+    // create a bait
+    let bait = createBait(baitNum)
+    socket.emit("bait", bait)
+  })
 })
+
+
+
+// create a new collectible 
+function createBait(id) {
+  let random_x, random_y
+  random_x = Math.floor(Math.random() * (CANVAS_WIDTH - 20)) + 20
+  random_y = Math.floor(Math.random() * (CANVAS_HEIGHT - 20)) + 20
+  random_value = Math.floor(Math.random() * 5) + 1
+  baitNum += 1
+  return new Collectible({ x: random_x, y: random_y, value: random_value, id: id })
+}
+
 
 
 module.exports = app; // For testing
