@@ -24,7 +24,13 @@ class Player {
   }
 
   collision(item) {
-
+    let baitRadius = item.value * 2 + 10
+    if (Math.abs(this.x - item.x) < baitRadius + 15
+      && Math.abs(this.y - item.y) < baitRadius + 15) {
+      return true
+    } else {
+      return false
+    }
   }
 
   calculateRank(arr) {

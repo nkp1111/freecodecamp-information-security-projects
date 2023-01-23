@@ -77,6 +77,7 @@ const CANVAS_HEIGHT = 500
 
 let players = []
 let baitNum = 0
+let bait
 
 io.on("connection", (socket) => {
 
@@ -85,14 +86,24 @@ io.on("connection", (socket) => {
     players.push(player)
 
     // create a bait
-    let bait = createBait(baitNum)
+    bait = createBait(baitNum)
+    socket.emit("bait", bait)
+  })
+
+  // on player collision
+  socket.on("collision", (player) => {
+    for (let p of players) {
+      if (p.id === player.id) {
+        p.score += bait.value
+      }
+    }
+    // update bait
+    bait = createBait(baitNum)
     socket.emit("bait", bait)
   })
 })
 
-
-
-// create a new collectible 
+// function to create new collectible/bait 
 function createBait(id) {
   let random_x, random_y
   random_x = Math.floor(Math.random() * (CANVAS_WIDTH - 20)) + 20
@@ -101,6 +112,8 @@ function createBait(id) {
   baitNum += 1
   return new Collectible({ x: random_x, y: random_y, value: random_value, id: id })
 }
+
+
 
 
 
