@@ -23,10 +23,10 @@ socket.on('connect', function () {
   }
 
   window.addEventListener("keydown", (e) => {
-    let direction = e.key === "d" ? "RIGHT" :
-      e.key === "a" ? "LEFT" :
-        e.key === "w" ? "UP" :
-          e.key === "s" ? "DOWN" : null
+    let direction = e.key === "d" ? "right" :
+      e.key === "a" ? "left" :
+        e.key === "w" ? "up" :
+          e.key === "s" ? "down" : null
     if (direction) {
       context.clearRect(...getCoord(cPlayer))
       cPlayer.movePlayer(direction, 50)

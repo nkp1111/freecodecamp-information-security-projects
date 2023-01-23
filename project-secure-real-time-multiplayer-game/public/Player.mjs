@@ -8,16 +8,16 @@ class Player {
 
   movePlayer(dir, speed) {
     switch (dir) {
-      case "LEFT":
+      case "left":
         this.x -= speed;
         break;
-      case "RIGHT":
+      case "right":
         this.x += speed;
         break;
-      case "UP":
+      case "up":
         this.y -= speed;
         break;
-      case "DOWN":
+      case "down":
         this.y += speed;
         break;
     }
