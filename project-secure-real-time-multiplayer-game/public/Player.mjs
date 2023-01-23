@@ -34,8 +34,15 @@ class Player {
   }
 
   calculateRank(arr) {
-
+    let currentRank = 1
+    for (let p of arr) {
+      if (p.score > this.score) {
+        currentRank += 1
+      }
+    }
+    return `Rank: ${currentRank}/${arr.length}`
   }
+
 }
 
 export default Player;
